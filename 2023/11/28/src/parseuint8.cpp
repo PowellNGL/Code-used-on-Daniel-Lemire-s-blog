@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <string>
+#include <vector>
 
 // credit: Jeroen Koekkoek, does not pass tests.
 int parse_uint8_swar(const char *str, size_t len, uint8_t *num) {
@@ -101,4 +103,47 @@ int parse_uint8_naive_md(const char *str, size_t len, uint8_t *num) {
   printf("n %zu\n", n);
 
   return n < 256 && d1<10 && d2<10 && d3<10;
+}
+
+int parse_uint8_lut_padded(const char *str, size_t len, uint8_t *num)
+{
+  uint32_t key = make_lut_index_padded(str, len);
+  uint16_t result = lut_vector[key];
+  *num = static_cast<uint8_t>(result);
+  return result <= 255;
+}
+
+int parse_uint8_lut_masked(const char *str, size_t len, uint8_t *num)
+{
+  uint32_t key = make_lut_index_masked(str, len);
+  uint16_t result = lut_vector[key];
+  *num = static_cast<uint8_t>(result);
+  return result <= 255;
+}
+
+uint32_t make_lut_index_padded(const char *str, size_t len)
+{
+  if (len > 3) return 0;
+  return *reinterpret_cast<const uint32_t *>(str);
+}
+
+uint32_t make_lut_index_masked(const char *str, size_t len)
+{
+  if (len > 3) return 0;
+  uint32_t mask = 0xffffffff >> 8 * (4 - len);
+  uint32_t out = *reinterpret_cast<const uint32_t *>(str);
+  out &= mask;
+  return out;
+};
+
+void make_lut()
+{
+  lut_vector.resize(256 * 256 * 256);
+  std::fill(lut_vector.begin(), lut_vector.end(), 256);
+
+  for (size_t val = 0; val <= 255; val++) {
+    std::string s = std::to_string(val);
+    uint32_t key = make_lut_index_masked(s.data(), s.size());
+    lut_vector[key] = (uint16_t)val;
+  }
 }

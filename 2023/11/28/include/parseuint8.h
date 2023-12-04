@@ -1,7 +1,11 @@
 #ifndef ESCAPE_H
 #define ESCAPE_H
+#include <array>
 #include <cstdint>
 #include <cstddef>
+#include <cstring>
+#include <string_view>
+#include <vector>
 
 
 // Parses ASCII numbers between 0 and 255 with validation.
@@ -20,8 +24,28 @@ int parse_uint8_fastswar_bob(const char *str, size_t len, uint8_t *num);
 // parse_uint8_fromchars is correct 
 int parse_uint8_fromchars(const char *str, size_t len, uint8_t *num);
 int parse_uint8_naive(const char *str, size_t len, uint8_t *num);
+int parse_uint8_lut_padded(const char *str, size_t len, uint8_t *num);
+int parse_uint8_lut_masked(const char *str, size_t len, uint8_t *num);
 
 int parse_uint8_naive_md(const char *str, size_t len, uint8_t *num);
+struct padded_string
+{
+  std::array<char, 4> buf;
+  size_t size;
+  
+  padded_string(std::string_view str)
+  {
+    buf.fill(0);
+    std::memcpy(buf.data(), str.data(), std::min(buf.size(), str.size()));
+    size = std::min(str.size(), buf.size());
+  }
+};
+
+uint32_t make_lut_index_padded(const char *str, size_t len);
+uint32_t make_lut_index_masked(const char *str, size_t len);
+void make_lut();
+
+inline std::vector<uint16_t> lut_vector{};
 
 
 #endif // ESCAPE_H
